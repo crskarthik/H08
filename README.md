@@ -16,15 +16,17 @@ Run PowerShell as Admin and use Chocolatey to install zookeeper, kafka, and mave
 
 ```PowerShell
 choco install apache-zookeeper -y
-choco install kafka  -y
+choco install kafka -y
 choco install maven -y
 ```
 
 Configure environment variables for easy access. Create the following - use your path. 
+-ZOOKEEPER_HOME = C:\Tools\zookeeper-3.4.9
+- KAFKA_HOME = C:\ProgramData\chocolatey\lib\kafka\tools\kafka_2.11-1.0.0
 
-```
-ZOOKEEPER_HOME = C:\Tools\zookeeper-3.4.9
-KAFKA_HOME = C:\ProgramData\chocolatey\lib\kafka\tools\kafka_2.11-1.0.0
+```PowerShell
+[Environment]::SetEnvironmentVariable("ZOOKEEPER_HOME", "C:\Tools\zookeeper-3.4.9", "Machine")
+[Environment]::SetEnvironmentVariable("KAFKA_HOME", "C:\ProgramData\chocolatey\lib\kafka\tools\kafka_2.11-1.0.0", "Machine")
 ```
 
 Edit System “Path” to append
@@ -45,27 +47,27 @@ zkServer
 Start the Kafka service. In a new PowerShell Admin folder, run the following and then minimize (do not close) the window:
 
 ```PowerShell
-kafka-server-start.bat C:\ProgramData\chocolatey\lib\kafka\tools\kafka_2.11-1.0.0\config\server.properties
+kafka-server-start C:\ProgramData\chocolatey\lib\kafka\tools\kafka_2.11-1.0.0\config\server.properties
 ```
 
 ## Execute Java Sample
 
 1. Clone the Maven project from the article into h08. Explore the Maven pom file and the Java code for the Producer and Consumer.
-1. In a Git Bash window, compile the code using Maven and create an executable jar file with  
+1. In a PowerShell window, compile the code using Maven and create an executable jar file with  
 
-```Bash 
+```PowerShell 
 mvn clean compile assembly:single
 ```
 
-1. In this Git Bash window, start the Consumer app using topic test and group1 with 
+1. In this window, start the Consumer app using topic test and group1 with 
 
-```Bash
+```PowerShell
 java -cp target/KafkaAPIClient-1.0-SNAPSHOT-jar-with-dependencies.jar com.spnotes.kafka.simple.Consumer test group1
 ```
 
-1. In another Git Bash window, start the Producer app using topic test with 
+1. In another PowerShell window, start the Producer app using topic test with 
 
-```Bash
+```PowerShell
 java -cp target/KafkaAPIClient-1.0-SNAPSHOT-jar-with-dependencies.jar com.spnotes.kafka.simple.Producer test
 ```
 
@@ -85,3 +87,12 @@ Verify your messages are output by the Consumer.
 Create a professional README.md file to explain how to setup and run your project.
 
 Put your entire code solution in a repo and share a clickable link. 
+
+## Executing this CustomProducer
+
+For convenience, I've created a batch file to run the CustomProducer.
+Just open a PowerShell window here and run:
+
+```PowerShell
+.\runp
+```
