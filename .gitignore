@@ -1,0 +1,15 @@
+# Ignore all these generated or environment artifacts 
+# ending slash will ignore all target folders (not just in the root)
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.log
+*.logs
+*.iml
+.idea/
+.eclipse
