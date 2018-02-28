@@ -86,7 +86,7 @@ Verify your messages are output by the Consumer.
 
 Create a professional README.md file to explain how to setup and run your project.
 
-Put your entire code solution in a repo and share a clickable link. 
+Put your entire code solution in a repo and share a clickable link.
 
 ## Executing this CustomProducer
 
@@ -96,3 +96,24 @@ Just open a PowerShell window here and run:
 ```PowerShell
 .\runp
 ```
+
+## Twitter Help
+
+See http://www.baeldung.com/twitter4j
+
+For help registering your Twitter API see this Tweepy article: http://www.compjour.org/tutorials/getting-started-with-tweepy/
+
+Register app: 
+https://apps.twitter.com
+
+Developer Agreement: 
+https://developer.twitter.com/en/developer-terms/agreement-and-policy
+
+
+Name: KafkaCaseCustomProducer
+
+Description: Sample app to illustrate working with the Twitter API and using Kafka from a Java application
+
+Website: https://bitbucket.org/professorcase/h08
+
+Callback URL: (blank)

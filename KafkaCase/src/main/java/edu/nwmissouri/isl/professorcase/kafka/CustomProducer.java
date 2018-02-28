@@ -4,10 +4,19 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.Paging;
+import twitter4j.Status;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Scanner;
+
+import java.io.IOException;
 
 /**
  * Custom Producer using Kafka for messaging. 
@@ -15,46 +24,94 @@ import java.util.Scanner;
  * src/main/resources.
  */
 public class CustomProducer {
-  private static Scanner in;
-  private static FileInputStream istream = null;
-  private static Properties props = new Properties();
+  private static FileInputStream runStream = null;
+  private static Properties runProperties = new Properties();
 
   public static void main(String[] argv) throws Exception {
-    in = new Scanner(System.in);
-    System.out.println("Enter message(type exit to quit)");
 
-    // Create an input stream for the properties
-    String fs = System.getProperty("user.dir") + File.separator + "src" + File.separator + "main"
-        + File.separator + "resources" + File.separator + "run.properties";
-    System.out.println("Reading config from " + fs);
-    istream = new FileInputStream(fs);
+    // Create an input stream for the run properties ................
+    String runFile = System.getProperty("user.dir") + File.separator + "src" + File.separator + "main" + File.separator
+        + "resources" + File.separator + "run.properties";
+    System.out.println("Reading config from " + runFile);
+    runStream = new FileInputStream(runFile);
 
     // Load properties and display
-    props.load(istream);
-    System.out.println(props.getProperty("BOOTSTRAP_SERVERS_CONFIG"));
-    System.out.println(props.getProperty("KEY_SERIALIZER_CLASS_CONFIG"));
-    System.out.println(props.getProperty("VALUE_SERIALIZER_CLASS_CONFIG"));
-    System.out.println(props.getProperty("TOPIC"));
+    runProperties.load(runStream);
+    System.out.println("Run properties.................");
+    System.out.println("BOOTSTRAP_SERVERS_CONFIG =      " + runProperties.getProperty("BOOTSTRAP_SERVERS_CONFIG"));
+    System.out.println("KEY_SERIALIZER_CLASS_CONFIG =   " + runProperties.getProperty("KEY_SERIALIZER_CLASS_CONFIG"));
+    System.out.println("VALUE_SERIALIZER_CLASS_CONFIG = " + runProperties.getProperty("VALUE_SERIALIZER_CLASS_CONFIG"));
+    System.out.println("TOPIC =                         " + runProperties.getProperty("TOPIC"));
+    System.out.println("TWITTER_USER =                  " + runProperties.getProperty("TWITTER_USER"));
+    System.out.println("DELAY_MS =                      " + runProperties.getProperty("DELAY_MS"));
+
+    String topicName = runProperties.getProperty("TOPIC");
+    String user = runProperties.getProperty("TWITTER_USER");
+    int delay_ms = Integer.parseInt(runProperties.getProperty("DELAY_MS"));
 
     //Configure the Producer
     Properties configProperties = new Properties();
-    configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, props.getProperty("BOOTSTRAP_SERVERS_CONFIG"));
-    configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, props.getProperty("KEY_SERIALIZER_CLASS_CONFIG"));
+    configProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+        runProperties.getProperty("BOOTSTRAP_SERVERS_CONFIG"));
+    configProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+        runProperties.getProperty("KEY_SERIALIZER_CLASS_CONFIG"));
     configProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-        props.getProperty("VALUE_SERIALIZER_CLASS_CONFIG"));
-
-    String topicName = props.getProperty("TOPIC");
-    System.out.println("topicName="+topicName);
-
+        runProperties.getProperty("VALUE_SERIALIZER_CLASS_CONFIG"));
     org.apache.kafka.clients.producer.Producer producer = new KafkaProducer(configProperties);
-    String line = in.nextLine();
-    while (!line.equals("exit")) {
-      //TODO: Make sure to use the ProducerRecord constructor that does not take parition Id
-      ProducerRecord<String, String> rec = new ProducerRecord<String, String>(topicName, line);
-      producer.send(rec);
-      line = in.nextLine();
+
+    System.out.println("==========================================");
+    System.out.println("You must start a consumer to see messages.");
+    System.out.println("==========================================");
+    System.out.println("\nStarting custom producer..............\n");
+
+    Twitter twitter = getTwitterinstance();
+    int pageno = 1;
+    int i = 1;
+    List<Status> statuses = new ArrayList<Status>();
+    try {
+      Paging page = new Paging(pageno, 20);
+      statuses.addAll(twitter.getUserTimeline(user, page));
+      System.out.println("Total: " + statuses.size());
+      for (Status status : statuses) {
+        String s = "@" + status.getUser().getScreenName() + ":" + status.getText();
+        System.out.println("Posting tweet number " + i++ +". See Consumer for details.");
+        ProducerRecord<String, String> rec = new ProducerRecord<String, String>(topicName, s);
+        producer.send(rec);
+        Thread.sleep(delay_ms);
+      }
+    } catch (TwitterException e) {
+      e.printStackTrace();
     }
-    in.close();
     producer.close();
+  }
+
+public static Twitter getTwitterinstance() throws IOException {
+
+    FileInputStream twitterStream = null;
+    Properties twitterProperties = new Properties();
+
+    String twitterFile = System.getProperty("user.dir") + File.separator + "src" + File.separator + "main"
+        + File.separator + "resources" + File.separator + "twitter4j.properties";
+    System.out.println("Reading config from " + twitterFile +"\n");
+    twitterStream = new FileInputStream(twitterFile);
+
+    twitterProperties.load(twitterStream);
+    System.out.println("Displaying Twitter properties:\n");
+    System.out.println("  oauth.consumerKey =       "+ twitterProperties.getProperty("oauth.consumerKey"));
+    System.out.println("  oauth.consumerSecret =    "+ twitterProperties.getProperty("oauth.consumerSecret"));
+    System.out.println("  oauth.accessToken =       "+ twitterProperties.getProperty("oauth.accessToken"));
+    System.out.println("  oauth.accessTokenSecret = "+ twitterProperties.getProperty("oauth.accessTokenSecret"));
+
+    ConfigurationBuilder cb = new ConfigurationBuilder();
+
+    cb.setDebugEnabled(true).setOAuthConsumerKey(twitterProperties.getProperty("oauth.consumerKey"))
+        .setOAuthConsumerSecret(twitterProperties.getProperty("oauth.consumerSecret"))
+        .setOAuthAccessToken(twitterProperties.getProperty("oauth.accessToken"))
+        .setOAuthAccessTokenSecret(twitterProperties.getProperty("oauth.accessTokenSecret"));
+
+    TwitterFactory tf = new TwitterFactory(cb.build());
+    Twitter twitter = tf.getInstance();
+    System.out.println("\nReturning twitter instance ..............\n");
+    return twitter;
   }
 }
