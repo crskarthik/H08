@@ -149,7 +149,7 @@ Twitter App Attributes Example:
 
 - Name: KafkaCaseCustomProducer
 - Description: Sample app to illustrate working with the Twitter API and using Kafka from a Java application
-- Website: https://bitbucket.org/professorcase/h08
+- Website: https://github.com/crskarthik/H08
 - Callback URL: (blank)
 
 ## Working with Kafka
